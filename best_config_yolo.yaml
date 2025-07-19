@@ -1,0 +1,90 @@
+# === YOLOv11 Best Practice Training Config for Segmentation ===
+# Balanced augmentations → better generalization
+
+# Early stopping + cosine LR → stable training
+
+# Checkpointing → lets you compare multiple saved models
+
+# Dropout + weight_decay → regularization to reduce overfitting
+
+# Pretrained + AMP + Auto Augment → optimal for real-world tasks
+
+
+# --- Core Settings ---
+task: segment                # Task type: 'detect', 'segment', or 'classify'
+model: yolov11m.pt           # Pretrained base model; 'm' is a good balance of speed/accuracy
+data: data.yaml              # Path to dataset YAML (must include train/val paths and class names)
+epochs: 50                   # Number of training epochs
+batch: 16                    # Batch size (adjust based on GPU memory)
+imgsz: 640                   # Image size (square); keep consistent during training/val
+pretrained: True             # Use pretrained weights (essential for faster convergence)
+device: 0                    # CUDA device id or 'cpu' if no GPU
+name: yolov11m_seg_run       # Output folder name
+save: True                   # Save final model
+save_period: 10              # Save checkpoint every 10 epochs to compare models later
+patience: 7                  # Early stopping patience — stop if no val mAP improvement
+
+# --- Augmentations (for generalization) ---
+hsv_h: 0.015                 # Random hue augmentation
+hsv_s: 0.7                   # Random saturation
+hsv_v: 0.4                   # Random brightness
+translate: 0.1               # Random shift (helps with object localization variance)
+scale: 0.5                   # Random scale (zoom in/out)
+fliplr: 0.5                  # Horizontal flip
+flipud: 0.0                  # Vertical flip (not useful for driving scenes)
+degrees: 0.0                 # Rotation — 0 for road scenes
+shear: 0.0                   # Shear transform — off unless needed
+perspective: 0.0             # Perspective distortion — off for street-level images
+mosaic: 1.0                  # Combine 4 images (great for segmentation variety)
+copy_paste: 0.1              # Paste random objects into other images — helpful for rare classes
+copy_paste_mode: flip        # Use flipped objects for variation
+auto_augment: randaugment    # Automatically choose augmentation strategy
+
+# --- Disabling complex augmentations for segmentation ---
+cutmix: 0.0                  # Not useful for segmentation
+mixup: 0.0                   # Can hurt performance in pixel-wise tasks
+
+# --- Optimizer & Training Control ---
+optimizer: auto              # Let YOLOv11 pick best optimizer (AdamW/SGD)
+cos_lr: True                 # Cosine LR schedule for smoother convergence
+lr0: 0.01                    # Initial learning rate
+lrf: 0.01                    # Final learning rate multiplier (for decay)
+momentum: 0.937              # SGD momentum
+weight_decay: 0.0005         # Regularization to prevent overfitting
+dropout: 0.1                 # Dropout (regularization) helps avoid overfitting on smaller data
+amp: True                    # Automatic mixed precision — speeds up training (float16)
+nbs: 64                      # Nominal batch size (used to scale learning rate)
+warmup_epochs: 3            # Warmup helps avoid early instability
+warmup_bias_lr: 0.0          # Start bias learning rate low
+warmup_momentum: 0.8         # Start momentum lower and increase
+
+# --- Validation & Output ---
+val: True                    # Run validation during training
+plots: True                  # Save plots (loss curves, PR curves, F1, confusion matrix)
+verbose: True                # Detailed logs
+save_conf: False             # Don’t save confidence scores per label (not needed for now)
+save_txt: False              # Don’t save .txt predictions (useful only for COCO test submission)
+save_crop: False             # Don’t save cropped objects
+show: False                  # Disable GUI display
+exist_ok: True               # Overwrite folder if exists
+rect: False                  # Disable rectangular training batches
+overlap_mask: True           # Allow mask overlaps (required for segment tasks)
+retina_masks: False          # Keep masks aligned with original size (set True for RetinaNet-style)
+
+# --- Logging & Exporting ---
+split: val                   # Ensure val set is defined
+visualize: False             # Don’t visualize feature maps (advanced)
+profile: False               # Don’t profile time/memory
+simplify: False              # No model simplification
+format: torchscript          # Export format (torchscript for inference compatibility)
+tensorboard: True            # Enable TensorBoard logging for real-time monitoring
+
+
+# how to use this 
+# save it best config.yaml
+#-------------------------------------------------------
+# from ultralytics import YOLO
+# model = YOLO("yolov11m.pt")
+# model.train(cfg="best_config.yaml")
+
+
